@@ -21,11 +21,11 @@ def push(text):
 
 
 def record_user_details(email, name="Name not provided", notes="not provided"):
-    push(f"Recording {name} with email {email} and notes {notes}")
+    # push(f"Recording {name} with email {email} and notes {notes}")
     return {"recorded": "ok"}
 
 def record_unknown_question(question):
-    push(f"Recording {question}")
+    # push(f"Recording {question}")
     return {"recorded": "ok"}
 
 record_user_details_json = {
@@ -76,7 +76,13 @@ tools = [{"type": "function", "function": record_user_details_json},
 class Me:
 
     def __init__(self):
-        self.openai = OpenAI(api_key="dupa")
+        gemini_api_key = os.getenv('GEMINI_API_KEY')
+
+        print(f"Gemni api key length: {len(gemini_api_key)}")
+        self.openai = OpenAI(
+            api_key=gemini_api_key,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+        )
         self.name = "Ed Donner"
         reader = PdfReader("me/linkedin.pdf")
         self.linkedin = ""
@@ -113,10 +119,11 @@ If the user is engaging in discussion, try to steer them towards getting in touc
         return system_prompt
     
     def chat(self, message, history):
+        model_to_use = "gemini-2.0-flash"
         messages = [{"role": "system", "content": self.system_prompt()}] + history + [{"role": "user", "content": message}]
         done = False
         while not done:
-            response = self.openai.chat.completions.create(model="gpt-4o-mini", messages=messages, tools=tools)
+            response = self.openai.chat.completions.create(model=model_to_use, messages=messages, tools=tools)
             if response.choices[0].finish_reason=="tool_calls":
                 message = response.choices[0].message
                 tool_calls = message.tool_calls
